@@ -1,0 +1,6 @@
+.env
+node_modules/
+logs/
+waha-sessions/
+waha-files/
+nginx/ssl/
