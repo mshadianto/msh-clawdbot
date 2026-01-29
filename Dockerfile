@@ -10,7 +10,7 @@ WORKDIR /app
 RUN mkdir -p /app/logs && chown -R nodejs:nodejs /app
 
 # Copy package files
-COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml ./
 
 # Install pnpm & dependencies
 RUN npm install -g pnpm && \
