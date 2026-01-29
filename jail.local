@@ -1,0 +1,29 @@
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 5
+backend = systemd
+
+[sshd]
+enabled = true
+port = 22
+logpath = /var/log/auth.log
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/error.log
+
+[nginx-limit-req]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/error.log
+maxretry = 10
+
+[webhook-flood]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/access.log
+maxretry = 20
+findtime = 60
+bantime = 1800

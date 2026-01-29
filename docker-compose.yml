@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: waha
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"  # ✅ Only local access
+    volumes:
+      - ./waha-sessions:/app/.sessions
+      - ./waha-files:/app/files
+    environment:
+      - WAHA_WEBHOOK_URL=http://clawdbot:3001/webhook
+      - WAHA_WEBHOOK_EVENTS=message,message.any
+      - WHATSAPP_API_KEY=${WAHA_API_KEY}
+      - WHATSAPP_API_KEY_HEADER=X-Api-Key
+      # Security headers
+      - WAHA_WEBHOOK_SIGNATURE_ENABLED=true
+      - WAHA_WEBHOOK_SIGNATURE_SECRET=${WEBHOOK_SECRET}
+    networks:
+      - clawdbot-network
+    read_only: true  # ✅ Read-only filesystem
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+  clawdbot:
+    build: ./clawdbot
+    container_name: clawdbot
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"  # ✅ Only local access
+    volumes:
+      - ./clawdbot/logs:/app/logs
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WAHA_URL=http://waha:3000
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - ENCRYPTION_PASSWORD=${ENCRYPTION_PASSWORD}
+      - ADMIN_PHONE=${ADMIN_PHONE}
+      - ALLOWED_USERS=${ALLOWED_USERS}
+      - PORT=3001
+    depends_on:
+      - waha
+    networks:
+      - clawdbot-network
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  linkedin-monitor:
+    build: ./linkedin-monitor
+    container_name: linkedin-monitor
+    restart: unless-stopped
+    volumes:
+      - ./linkedin-monitor/data:/app/data
+    environment:
+      - WAHA_URL=http://waha:3000
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - NOTIFICATION_PHONE=${NOTIFICATION_PHONE}
+    depends_on:
+      - waha
+    networks:
+      - clawdbot-network
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SYS_ADMIN  # Required for Playwright
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /var/log/nginx:/var/log/nginx
+    depends_on:
+      - clawdbot
+      - waha
+    networks:
+      - clawdbot-network
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  clawdbot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  waha-sessions:
+  waha-files:

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo:*)",
+      "Bash(tree:*)",
+      "Bash(pacman:*)",
+      "Bash(apt-get install:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(git -C /c/clawdbot log --oneline -20)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
